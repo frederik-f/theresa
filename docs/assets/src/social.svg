@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640">
+  <title>THERESA — THErmal REpository Surrogate Analysis</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#15304e"/>
+      <stop offset="1" stop-color="#0c1c2f"/>
+    </linearGradient>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1b3a5d"/>
+      <stop offset="1" stop-color="#11263e"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1280" height="640" fill="url(#bg)"/>
+
+  <!-- Icon. -->
+  <g transform="translate(88 92) scale(0.8125)">
+    <rect width="256" height="256" rx="56" fill="url(#tile)"/>
+    <line x1="40" y1="74" x2="216" y2="74" stroke="#e5533d" stroke-width="9"
+          stroke-linecap="round" stroke-dasharray="14 13"/>
+    <path d="M50 198 C 60 198, 62 100, 84 94 C 110 88, 124 150, 214 166"
+          fill="none" stroke="#5a9be0" stroke-width="40" stroke-linecap="round"
+          stroke-linejoin="round" opacity="0.2"/>
+    <path d="M50 198 C 60 198, 62 100, 84 94 C 110 88, 124 150, 214 166"
+          fill="none" stroke="#5a9be0" stroke-width="17" stroke-linecap="round"
+          stroke-linejoin="round"/>
+    <circle cx="84" cy="94" r="17" fill="#f2b84b" stroke="#11263e" stroke-width="7"/>
+  </g>
+
+  <!-- Wordmark. -->
+  <text x="334" y="186" fill="#ffffff" font-family="Lato" font-weight="900"
+        font-size="100" letter-spacing="7">THERESA</text>
+  <text x="337" y="238" font-family="Lato" font-weight="500" font-size="31"
+        fill="#9fb6cf" letter-spacing="0.5"><tspan fill="#f2b84b" font-weight="800">TH</tspan>ermal <tspan fill="#f2b84b" font-weight="800">RE</tspan>pository <tspan fill="#f2b84b" font-weight="800">S</tspan>urrogate <tspan fill="#f2b84b" font-weight="800">A</tspan>nalysis</text>
+  <text x="337" y="284" font-family="Lato" font-weight="400" font-size="22"
+        fill="#7d95b0">Peak canister temperature in milliseconds</text>
+
+  <!-- Chart motif across the lower half. -->
+  <g>
+    <line x1="96" y1="572" x2="1184" y2="572" stroke="#2c4a6c" stroke-width="2"/>
+    <line x1="96" y1="352" x2="96" y2="572" stroke="#2c4a6c" stroke-width="2"/>
+    <line x1="96" y1="380" x2="1184" y2="380" stroke="#e5533d" stroke-width="4"
+          stroke-dasharray="11 10" stroke-linecap="round"/>
+    <text x="1184" y="366" text-anchor="end" fill="#e5533d"
+          font-family="Lato" font-weight="600" font-size="20">design limit</text>
+    <path d="M104 566 C 120 566, 124 432, 168 424 C 240 412, 320 512, 1180 532"
+          fill="none" stroke="#5a9be0" stroke-width="30" stroke-linecap="round"
+          stroke-linejoin="round" opacity="0.2"/>
+    <path d="M104 566 C 120 566, 124 432, 168 424 C 240 412, 320 512, 1180 532"
+          fill="none" stroke="#5a9be0" stroke-width="8" stroke-linecap="round"
+          stroke-linejoin="round"/>
+    <circle cx="168" cy="424" r="11" fill="#f2b84b" stroke="#11263e" stroke-width="4"/>
+    <text x="196" y="408" fill="#cfdcea" font-family="Lato" font-weight="600"
+          font-size="20">peak temperature</text>
+    <text x="1184" y="604" text-anchor="end" fill="#7d95b0" font-family="Lato"
+          font-weight="400" font-size="18">OpenGeoSys 6 · Duhamel superposition · POD–GP surrogate</text>
+  </g>
+</svg>

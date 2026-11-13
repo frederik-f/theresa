@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="160" viewBox="0 0 640 160">
+  <title>THERESA</title>
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#15304e"/>
+      <stop offset="1" stop-color="#0c1c2f"/>
+    </linearGradient>
+  </defs>
+  <!-- Icon, 160 px. -->
+  <g transform="scale(0.625)">
+    <rect width="256" height="256" rx="56" fill="url(#tile)"/>
+    <line x1="40" y1="74" x2="216" y2="74" stroke="#e5533d" stroke-width="9"
+          stroke-linecap="round" stroke-dasharray="14 13"/>
+    <path d="M50 198 C 60 198, 62 100, 84 94 C 110 88, 124 150, 214 166"
+          fill="none" stroke="#5a9be0" stroke-width="40" stroke-linecap="round"
+          stroke-linejoin="round" opacity="0.2"/>
+    <path d="M50 198 C 60 198, 62 100, 84 94 C 110 88, 124 150, 214 166"
+          fill="none" stroke="#5a9be0" stroke-width="17" stroke-linecap="round"
+          stroke-linejoin="round"/>
+    <circle cx="84" cy="94" r="17" fill="#f2b84b" stroke="#0f2238" stroke-width="7"/>
+  </g>
+  <!-- Name in white, for the dark sidebar. -->
+  <text x="192" y="112" fill="#ffffff" font-family="Lato" font-weight="900"
+        font-size="84" letter-spacing="5">THERESA</text>
+</svg>

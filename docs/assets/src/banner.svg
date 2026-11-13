@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="320" viewBox="0 0 1280 320">
+  <title>THERESA — THErmal REpository Surrogate Analysis</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#15304e"/>
+      <stop offset="1" stop-color="#0c1c2f"/>
+    </linearGradient>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1b3a5d"/>
+      <stop offset="1" stop-color="#11263e"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1280" height="320" rx="28" fill="url(#bg)"/>
+
+  <!-- Chart motif on the right: axes, design limit, band, curve, peak. -->
+  <g>
+    <line x1="840" y1="262" x2="1228" y2="262" stroke="#2c4a6c" stroke-width="2"/>
+    <line x1="840" y1="56" x2="840" y2="262" stroke="#2c4a6c" stroke-width="2"/>
+    <line x1="840" y1="98" x2="1228" y2="98" stroke="#e5533d" stroke-width="4"
+          stroke-dasharray="10 9" stroke-linecap="round"/>
+    <text x="1228" y="86" text-anchor="end" fill="#e5533d"
+          font-family="Lato" font-weight="600" font-size="17">design limit</text>
+    <path d="M846 256 C 858 256, 860 128, 892 120 C 934 110, 968 196, 1226 214"
+          fill="none" stroke="#5a9be0" stroke-width="28" stroke-linecap="round"
+          stroke-linejoin="round" opacity="0.2"/>
+    <path d="M846 256 C 858 256, 860 128, 892 120 C 934 110, 968 196, 1226 214"
+          fill="none" stroke="#5a9be0" stroke-width="7" stroke-linecap="round"
+          stroke-linejoin="round"/>
+    <circle cx="892" cy="120" r="10" fill="#f2b84b" stroke="#11263e" stroke-width="4"/>
+  </g>
+
+  <!-- Icon. -->
+  <g transform="translate(60 60) scale(0.78125)">
+    <rect width="256" height="256" rx="56" fill="url(#tile)"/>
+    <line x1="40" y1="74" x2="216" y2="74" stroke="#e5533d" stroke-width="9"
+          stroke-linecap="round" stroke-dasharray="14 13"/>
+    <path d="M50 198 C 60 198, 62 100, 84 94 C 110 88, 124 150, 214 166"
+          fill="none" stroke="#5a9be0" stroke-width="40" stroke-linecap="round"
+          stroke-linejoin="round" opacity="0.2"/>
+    <path d="M50 198 C 60 198, 62 100, 84 94 C 110 88, 124 150, 214 166"
+          fill="none" stroke="#5a9be0" stroke-width="17" stroke-linecap="round"
+          stroke-linejoin="round"/>
+    <circle cx="84" cy="94" r="17" fill="#f2b84b" stroke="#11263e" stroke-width="7"/>
+  </g>
+
+  <!-- Wordmark. -->
+  <text x="300" y="148" fill="#ffffff" font-family="Lato" font-weight="900"
+        font-size="86" letter-spacing="6">THERESA</text>
+  <text x="302" y="194" font-family="Lato" font-weight="500" font-size="27"
+        fill="#9fb6cf" letter-spacing="0.5"><tspan fill="#f2b84b" font-weight="800">TH</tspan>ermal <tspan fill="#f2b84b" font-weight="800">RE</tspan>pository <tspan fill="#f2b84b" font-weight="800">S</tspan>urrogate <tspan fill="#f2b84b" font-weight="800">A</tspan>nalysis</text>
+  <text x="302" y="236" font-family="Lato" font-weight="400" font-size="19"
+        fill="#7d95b0">OpenGeoSys 6 · POD–GP surrogate</text>
+</svg>

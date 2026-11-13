@@ -1,0 +1,567 @@
+% SPDX-License-Identifier: CC-BY-4.0
+%
+% THERESA theory.  Build with:
+%
+%     latexmk -pdf docs/theory.tex -outdir=docs/_build
+%
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[a4paper,margin=28mm]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\usepackage[hidelinks]{hyperref}
+\usepackage{enumitem}
+
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}
+
+\sisetup{per-mode=symbol, range-phrase={\,--\,}, range-units=single}
+
+% \year is a TeX primitive (the current year counter), so the unit needs its
+% own name rather than redefining it.
+\DeclareSIUnit{\annum}{a}
+
+\newcommand{\Tss}{T_{\mathrm{ss}}}
+\newcommand{\Ttop}{T_{\mathrm{top}}}
+\newcommand{\Tlim}{T_{\mathrm{lim}}}
+\newcommand{\dd}{\,\mathrm{d}}
+
+\title{A surrogate model for the transient temperature field\\
+       around an emplaced waste canister}
+\author{THERESA 1.0.0 --- theory\thanks{\copyright\ 2026 frederik-f.
+  Licensed under CC BY 4.0, \url{https://creativecommons.org/licenses/by/4.0/}.}}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+A three-dimensional transient heat-conduction model of a Pollux-sized canister
+in drift emplacement takes minutes per design. This note derives the
+construction that reduces a parameter study to a single interpolation. Because
+the governing equation is linear, the surface temperature, the geothermal
+gradient, the emplacement depth, the canister loading and the decay-heat curve
+--- its amplitudes, its decay constants and their number --- enter \emph{in
+closed form}. The ten parameters that change the differential operator --- the
+two spacings and the conductivity and volumetric heat capacity of four
+materials --- are interpolated. The construction agrees with a conventional
+simulation to \SI{0.07}{\kelvin} at the peak, the interpolation with unseen
+designs to \SI{0.130}{\kelvin}.
+\end{abstract}
+
+\section{The model}
+
+\subsection{Domain}
+
+The repository is idealised as an infinite array of identical, simultaneously
+emplaced canisters lying in parallel drifts. The array has four planes of
+mirror symmetry through each canister, so it suffices to model one quarter of
+the unit cell,
+\[
+  \Omega = \Bigl[0, \tfrac{p}{2}\Bigr] \times
+           \Bigl[0, \tfrac{a}{2}\Bigr] \times
+           \bigl[-H,\, 0\bigr],
+\]
+where $x$ runs along the drift axis, $y$ perpendicular to it, and $z$ is height
+with $z = 0$ at ground level. The two lateral extents are half the canister
+pitch $p$ and half the drift spacing $a$.
+
+Neighbouring canisters are separated by a \emph{clear canister spacing} $g$,
+measured between their end faces, from which the pitch follows:
+\begin{equation}
+  p = L + g,
+  \label{eq:pitch}
+\end{equation}
+with $L$ the canister length. This matters for more than nomenclature: a pitch
+would have to satisfy $p > L$, so treating $p$ and $L$ as independent design
+variables would make the design space non-rectangular and generate impossible
+designs in one corner. In $(g, L)$ the box is rectangular by construction.
+
+$\Omega$ contains four subdomains with distinct, constant material properties:
+the canister (a quarter cylinder of radius $r_{\mathrm{c}}$ and length $L/2$
+within $\Omega$), the backfill, the liner, and the host rock. The drift runs the
+full length of the cell; only the canister is finite.
+
+\subsection{Governing problem}
+
+With $\rho$, $c_p$ and $\lambda$ piecewise constant,
+\begin{equation}
+  \rho c_p \frac{\partial T}{\partial t}
+    = \nabla\cdot\bigl(\lambda \nabla T\bigr) + q,
+  \qquad \text{in } \Omega \times (0, t_{\mathrm{end}}],
+  \label{eq:heat}
+\end{equation}
+subject to
+\begin{equation}
+  \begin{aligned}
+    T &= \Ttop                  && \text{on } \Gamma_{\mathrm{top}} \ (z = 0),\\
+    T &= \Ttop + \gamma H       && \text{on } \Gamma_{\mathrm{bot}} \ (z = -H),\\
+    \lambda \nabla T \cdot n &= 0 && \text{on } \Gamma_{\mathrm{sym}},
+  \end{aligned}
+  \label{eq:bc}
+\end{equation}
+where $\gamma$ is the geothermal gradient and $\Gamma_{\mathrm{sym}}$ collects
+the four lateral faces. A zero-flux condition is the natural boundary condition
+of the weak form, so in a finite-element discretisation the symmetry planes are
+imposed by \emph{not} constraining them.
+
+The source is the canister's decay heat, distributed uniformly over the
+canister volume:
+\begin{equation}
+  q(x,t) =
+  \begin{cases}
+    \dfrac{Q(t)}{4\,V_{\mathrm{c}}}, & x \in \Omega_{\mathrm{c}},\\[2ex]
+    0, & \text{otherwise},
+  \end{cases}
+  \qquad
+  Q(t) = \sum_{i=1}^{N} P_i\, e^{-\lambda_i t}.
+  \label{eq:source}
+\end{equation}
+Here $Q$ is the power of the \emph{whole} canister and $V_{\mathrm{c}}$ the
+volume of the quarter canister actually present in $\Omega$, so that
+$\int_\Omega q \dd V = Q/4$: the quarter cell receives a quarter of the power,
+as it must, since it represents a quarter of the unit cell. The factor is easy
+to get wrong by four.
+
+A second subtlety hides in $V_{\mathrm{c}}$. A tetrahedral mesh approximates
+the cylinder from the inside, so the meshed canister is smaller than the
+analytic one --- about \SI{0.45}{\percent} at the resolution used here. Since
+the solver integrates $q$ over the \emph{meshed} elements, referring $q$ to the
+analytic volume would inject that much too little heat, worth about a kelvin on
+a rise of a few hundred. $V_{\mathrm{c}}$ is therefore the meshed volume.
+
+\subsection{Initial condition}
+
+The simulation starts from the undisturbed rock, i.e.\ from the source-free
+steady state $\Tss$ solving
+\begin{equation}
+  \nabla\cdot\bigl(\lambda \nabla \Tss\bigr) = 0
+  \label{eq:steady}
+\end{equation}
+with the same boundary conditions~\eqref{eq:bc}.
+
+\section{Linearity}
+
+Equation~\eqref{eq:heat} is linear in $T$: the coefficients $\rho$, $c_p$ and
+$\lambda$ do not depend on $T$. Every reduction below follows from that single
+fact, and every one of them fails the moment a temperature-dependent
+conductivity is introduced.
+
+\subsection{The steady state: surface temperature and gradient are free}
+
+\begin{proposition}\label{prop:psi}
+Let $\psi$ solve \eqref{eq:steady} with $\psi = 0$ on $\Gamma_{\mathrm{top}}$,
+$\psi = H$ on $\Gamma_{\mathrm{bot}}$, and zero flux on
+$\Gamma_{\mathrm{sym}}$. Then for every $\Ttop$ and every $\gamma$,
+\begin{equation}
+  \Tss(x) = \Ttop + \gamma\,\psi(x).
+  \label{eq:tss}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+The right-hand side satisfies \eqref{eq:steady}, because $\Ttop$ is a constant
+and $\nabla\cdot(\lambda\nabla(\Ttop + \gamma\psi)) = \gamma\,
+\nabla\cdot(\lambda\nabla\psi) = 0$. It takes the value $\Ttop$ on
+$\Gamma_{\mathrm{top}}$ and $\Ttop + \gamma H$ on $\Gamma_{\mathrm{bot}}$, and
+its normal flux vanishes on $\Gamma_{\mathrm{sym}}$. The elliptic problem with
+mixed Dirichlet--Neumann data has a unique solution, so the two coincide.
+\end{proof}
+
+$\psi$ depends on the geometry alone. One source-free solve per design
+therefore covers \emph{every} surface temperature and \emph{every} geothermal
+gradient exactly, at no further cost. In a homogeneous medium $\psi(x) = -z$;
+the material contrast perturbs it only locally, by about
+\SI{0.02}{\kelvin}-equivalent at the canister, and computing $\psi$ rather than
+assuming a linear profile keeps that correction.
+
+\subsection{The heating: the decay curve is free}
+
+Write $u = T - \Tss$. Subtracting \eqref{eq:steady} from \eqref{eq:heat} and
+using that $\Tss$ is time-independent,
+\begin{equation}
+  \rho c_p \frac{\partial u}{\partial t}
+    = \nabla\cdot\bigl(\lambda \nabla u\bigr) + q,
+  \qquad
+  u(\cdot, 0) = 0,
+  \label{eq:rise}
+\end{equation}
+with $u = 0$ on $\Gamma_{\mathrm{top}} \cup \Gamma_{\mathrm{bot}}$ and zero flux
+on $\Gamma_{\mathrm{sym}}$. The boundary data of $u$ are homogeneous, so
+\emph{$u$ does not depend on $\Ttop$ or $\gamma$ at all}. Together
+with~\eqref{eq:tss},
+\begin{equation}
+  T(x,t) = \underbrace{\Ttop + \gamma\,\psi(x)}_{\text{one steady solve}}
+         + \underbrace{u(x,t)}_{\text{one transient solve}} .
+  \label{eq:split}
+\end{equation}
+
+Problem~\eqref{eq:rise} is linear and time-invariant in the source. Let
+$S(x,t)$ denote its solution for the unit step $Q \equiv \SI{1}{\watt}$. Then
+Duhamel's principle gives, for any power history $Q$,
+\begin{equation}
+  u(x,t) = \int_0^t \dot S(x, t - \tau)\, Q(\tau) \dd\tau
+         = \int_0^t \dot S(x, v)\, Q(t - v) \dd v .
+  \label{eq:duhamel}
+\end{equation}
+
+\subsubsection*{Evaluating \eqref{eq:duhamel} exactly}
+
+$S$ is known at the solver's own time levels
+$0 = t_0 < t_1 < \dots < t_{N_t}$. Between them the finite-element solution is
+interpolated linearly in time, so taking $S$ piecewise linear is not an
+approximation \emph{of the data} --- it is the data. Its derivative is then
+piecewise constant,
+\[
+  \dot S(v) = s_j \equiv \frac{S_{j+1} - S_j}{t_{j+1} - t_j},
+  \qquad v \in [t_j, t_{j+1}),
+\]
+and each interval integrates in closed form. For a single source term
+$P e^{-\lambda t}$ and an output time $t_n$,
+\[
+  \int_{t_j}^{t_{j+1}} P\, e^{-\lambda (t_n - v)} \dd v
+    = \frac{P}{\lambda}
+      \Bigl( e^{-\lambda (t_n - t_{j+1})} - e^{-\lambda (t_n - t_j)} \Bigr),
+\]
+so that, summing over the terms and the intervals below $t_n$,
+\begin{equation}
+  \boxed{\;
+  u(t_n) = \sum_{i=1}^{N} \frac{P_i}{\lambda_i}
+           \sum_{j < n} s_j
+           \Bigl( e^{-\lambda_i (t_n - t_{j+1})}
+                - e^{-\lambda_i (t_n - t_j)} \Bigr). \;}
+  \label{eq:closed}
+\end{equation}
+Every exponent in \eqref{eq:closed} is non-positive. The algebraically
+equivalent form with $e^{+\lambda_i v}$ would overflow in double precision for
+a short-lived nuclide over a \SI{1000}{\annum} window; this one cannot.
+
+Two limiting cases are worth recording. For $\lambda_i \to 0$ the quotient tends
+to the interval length $t_{j+1} - t_j$, and \eqref{eq:closed} collapses to
+$u(t_n) = P\, S(t_n)$ --- a constant source reproduces the step response, which
+is the identity that fixes the normalisation of $S$ and is checked to round-off
+in the test suite. And if $S$ itself happens to be an exponential sum,
+$S(t) = \sum_k a_k (1 - e^{-\mu_k t})$, term-by-term integration of
+\eqref{eq:duhamel} gives the independent closed form
+\begin{equation}
+  u(t) = \sum_k \sum_i a_k \mu_k P_i \,
+         \frac{e^{-\lambda_i t} - e^{-\mu_k t}}{\mu_k - \lambda_i},
+  \label{eq:expkernel}
+\end{equation}
+with the removable singularity at $\mu_k = \lambda_i$ replaced by its limit
+$a_k \mu_k P_i\, t\, e^{-\mu_k t}$. Equation~\eqref{eq:expkernel} is the
+reference against which \eqref{eq:closed} is verified on a kernel whose exact
+answer is known.
+
+\subsubsection*{Consequence}
+
+The amplitudes $P_i$, the decay constants $\lambda_i$ and the term count $N$
+appear only in~\eqref{eq:closed}, never in a simulation. Six exponential terms
+cost exactly what four or twenty cost, and introduce no error of their own. The
+interim storage time $t_{\mathrm{s}}$ is likewise free: shifting an exponential
+in time only rescales it,
+\begin{equation}
+  Q(t) = n \sum_i p_i e^{-\lambda_i (t + t_{\mathrm{s}})}
+       = \sum_i \underbrace{n\, p_i\, e^{-\lambda_i t_{\mathrm{s}}}}_{P_i}
+         e^{-\lambda_i t},
+  \label{eq:storage}
+\end{equation}
+so it folds entirely into the amplitudes.
+
+\subsection{The loading, forwards and backwards}
+
+From \eqref{eq:rise}, scaling the source scales the response: $Q \mapsto \alpha
+Q$ implies $u \mapsto \alpha u$. The loading --- as a package count $n$ in
+\eqref{eq:storage}, or directly as a power --- is therefore a multiplication.
+
+The inverse question is the one a design review asks, and it is equally exact.
+Let $\Gamma_{\mathrm{c}}$ be the canister surface and $\Tlim$ a design limit.
+Requiring $T \le \Tlim$ everywhere on $\Gamma_{\mathrm{c}}$ and at all times
+gives, using \eqref{eq:split},
+\[
+  \Tss(x) + \alpha\, u(x,t) \le \Tlim
+  \qquad \forall\, x \in \Gamma_{\mathrm{c}},\ t \in [0, t_{\mathrm{end}}],
+\]
+and since $u \ge 0$,
+\begin{equation}
+  \boxed{\;
+  \alpha_{\max}
+    = \min_{\substack{x \in \Gamma_{\mathrm{c}},\ t \\ u(x,t) > 0}}
+      \frac{\Tlim - \Tss(x)}{u(x,t)} . \;}
+  \label{eq:admissible}
+\end{equation}
+The largest admissible loading is $\alpha_{\max} Q(0)$. No search, no
+iteration, no further simulation: one pass over the stored
+$(x,t)$ grid. If $\Tss > \Tlim$ anywhere on the canister surface --- the
+undisturbed rock is already too hot --- the constraint set is empty and no
+loading works, which \eqref{eq:admissible} reports as $\alpha_{\max} \le 0$.
+
+Note that the maximum over the surface is taken \emph{after} the convolution,
+per time step, rather than maximising the step response first and convolving a
+single curve.
+
+The leading point on the surface does change with time --- for the reference
+design it is the barrel at the mid-length plane for 292 of 296 time steps, and
+one neighbouring point for the other four. What makes this harmless is that the
+two leading points are never more than $1.3\times10^{-3}$ apart in relative
+terms, so the two orders were measured to agree to better than
+\SI{0.1}{\milli\kelvin}. Convolving first is therefore not a correction to a
+present error but insurance: it costs nothing here, and it remains correct if
+the range is ever widened to shapes where the leading points separate, where
+maximising first would overestimate.
+
+\subsection{Depth}
+
+The emplacement depth $d$ acts twice. It sets the undisturbed temperature at
+the canister, which is $\Ttop + \gamma d$ to within the local material
+perturbation and is carried exactly by $\psi$ in~\eqref{eq:tss}. And it sets
+the distance from the heated zone to the upper Dirichlet boundary, which can
+only affect $u$.
+
+The second effect is bounded by diffusion. With $\alpha_{\mathrm{th}} =
+\lambda/(\rho c_p) \approx \SI{8.6e-7}{\metre\squared\per\second}$ for the host
+rock, the thermal penetration depth after \SI{1000}{\annum} is
+$\sqrt{\alpha_{\mathrm{th}} t} \approx \SI{180}{\metre}$, and at the time of the
+peak only \SIrange{35}{55}{\metre}. At \SI{300}{\metre} of cover or more the
+boundary is several penetration depths away.
+
+This is an estimate, not a proof, so the model measures it: kernels computed at
+$d \in \{300, 500, 700, 1000\}\,\si{\metre}$ with everything else held fixed
+differ, after the analytic term is removed, by at most
+\SI{0.062}{\kelvin} (Table~\ref{tab:errors}). Depth is therefore treated
+analytically and is not interpolated. The vertical extent keeps a constant
+clearance below the drift, so that the comparison isolates the upper boundary.
+
+\section{Interpolation of the step response}
+
+After Sections 2.1--2.4, the only quantities that still require simulation are
+those that change the differential operator itself:
+\[
+  \pi = \bigl(g,\ a,\
+    \{\lambda_m\}_{m=1}^{4},\ \{(\rho c)_m\}_{m=1}^{4}\bigr) \in \mathbb{R}^{10},
+\]
+the clear canister spacing and the drift spacing, which change the mesh, and
+the thermal conductivity and volumetric heat capacity of the four materials,
+which change the coefficients. The object to be learned is the map
+$\pi \mapsto S(\cdot,\cdot;\pi)$.
+
+Two remarks on this split. First, heat capacity appears only as the product
+$\rho c$: the density and the specific heat never enter~\eqref{eq:heat}
+separately, so treating them as two parameters would add a dimension carrying
+no information. Second, the split is not between ``important'' and
+``unimportant'' but between what the designer \emph{chooses} and what the
+operator \emph{contains}. Everything exact in Sections 2.1--2.4 is a choice: a
+surface temperature, a loading, a storage time. Everything interpolated is a
+property. That the second group is also where the physical uncertainty lives is
+what makes a variance-based sensitivity analysis over $\pi$ meaningful.
+
+The canister length $L$ is deliberately \emph{not} in $\pi$. A canister type is
+a discrete choice, and a length interpolated between two types corresponds to
+no object; a different type is trained separately.
+
+\subsection{Sampling the canister surface}
+
+$S$ is needed on the canister surface, but the finite-element node sets of two
+different designs are not comparable, so a nodal representation cannot be
+interpolated across designs. Instead $S$ is sampled at $N_s = 156$ probe points
+fixed in \emph{canister-local} coordinates: a grid in the circumferential angle
+$\theta \in [0, \pi]$ and the normalised axial coordinate $\xi \in [0, 1]$ of
+the half-length, plus rings on the end face. Because the grid is normalised, a
+probe sits at the same relative position for every design, so the $N_s$
+components of $S$ mean the same thing from one design to the next --- which is
+what makes interpolation across designs well defined at all.
+
+The sampling loss of that grid is measured against the exact nodal maximum over
+the canister-wall submesh, and is recorded for every training run. It is
+\SI{-0.01}{\percent}: the probe grid is marginally \emph{above} the nodal
+maximum, because the probes sit \SI{2}{\centi\metre} inside the surface, where
+the cast iron is a shade hotter.
+
+\subsection{Reduced basis}
+
+A kernel is an $N_t \times N_s$ array --- some $4.6 \times 10^4$ numbers --- so
+fitting one regressor per entry is neither necessary nor sensible. Kernels of
+different designs are very similar: they share a large near-field part, the
+conduction drop through the backfill and liner immediately around the canister,
+which depends on the spacings not at all and on $L$ only through $1/L$; and they
+differ in a smaller, smooth array-interaction part.
+
+A singular value decomposition of the mean-centred training kernels separates
+exactly that. Writing $K(\pi) \in \mathbb{R}^{N_t \times N_s}$ flattened,
+\begin{equation}
+  K(\pi) \;\approx\; \bar K + \sum_{k=1}^{M} c_k(\pi)\, \Phi_k,
+  \label{eq:pod}
+\end{equation}
+with $\Phi_k$ the leading right singular vectors. Modes are retained up to a
+captured energy fraction of $1 - 10^{-8}$, at most $M = 8$; the remaining
+modes carry run-to-run scatter only.
+
+\subsection{Regression}
+
+Each coefficient $c_k$ is a smooth scalar function of the ten variables, fitted
+by a Gaussian process with a Matérn-$5/2$ covariance with one length scale per
+input (ARD) and a white-noise term.
+
+The inputs are transformed before fitting, conductivities and spacings
+reciprocally and volumetric heat capacities directly:
+\begin{equation}
+  z = \bigl(1/g,\ 1/a,\ \{1/\lambda_m\}_{m=1}^{4},\ \{(\rho c)_m\}_{m=1}^{4}\bigr).
+  \label{eq:transform}
+\end{equation}
+For the two spacings this reflects that neighbour interaction scales with
+inverse distance. For the conductivities it reflects that a conduction
+resistance is proportional to $1/\lambda$, so the response is close to linear
+in $1/\lambda$ and far from it in $\lambda$. A volumetric heat capacity is not
+a resistance --- it sets how fast the near field charges up --- and enters
+roughly linearly, so it is sampled as it stands.
+
+Training points are drawn from a Latin hypercube rather than a tensor grid. At
+ten dimensions that is a necessity rather than a preference: six levels per
+variable would be $6^{10} \approx 6 \times 10^{7}$ runs, whereas $n$ scattered
+points give $n$ distinct levels in \emph{every} variable. Sampling is done in
+the transformed coordinates~\eqref{eq:transform}.
+
+\subsection{Uncertainty}
+
+Each Gaussian process returns a posterior standard deviation $\sigma_k$ for its
+coefficient. Every step from there to a temperature is linear ---
+reconstruction~\eqref{eq:pod}, convolution~\eqref{eq:closed}, and the additive
+split~\eqref{eq:split} --- so a one-sigma perturbation of $c_k$ maps to a
+temperature curve $\delta T_k(t)$ by the same operations. The coefficients are
+fitted independently, so the contributions combine in quadrature:
+\begin{equation}
+  \sigma_T(t) = \Bigl( \sum_{k=1}^{M} \delta T_k(t)^2 \Bigr)^{1/2},
+  \qquad
+  \delta T_k = \mathcal{D}\bigl[\sigma_k \Phi_k\bigr],
+  \label{eq:sigma}
+\end{equation}
+where $\mathcal{D}$ denotes the convolution operator of \eqref{eq:closed}
+evaluated at the probe point that is hottest at time $t$.
+
+This is the uncertainty of the \emph{interpolation}, and of nothing else. It
+says how unsure the regression is about a design it was not trained on. It does
+not include the uncertainty of the physical model, which is dominated by the
+material data and the modelling assumptions of Section~\ref{sec:limits} and is
+very much larger.
+
+\section{Discretisation and error budget}
+
+\subsection{Time}
+
+The schedule is blocked-logarithmic: a few steps at one size, then the size
+grown by a fixed factor, until a ceiling is reached. Two things motivate this
+rather than a smoothly growing schedule. The step response rises over six
+decades of time and needs resolution at the fast end; and, since the problem is
+linear, the solver may reuse its setup for as long as the step size is
+unchanged, so keeping the number of \emph{distinct} sizes small is what makes
+the run cheap. The shipped schedule has 295 steps but only 28 distinct sizes,
+so \SI{9}{\percent} of steps pay for a solver setup.
+
+\subsection{Space and solver}
+
+Element size is graded from \SI{0.15}{\metre} at the canister to
+\SI{30}{\metre} in the far field, reaching the coarse size only after
+\SI{200}{\metre}. The last figure is not cosmetic: the field to be resolved
+extends about \SI{180}{\metre}. The grading meshes every corner of the design
+space.
+
+Uniform refinement of this grading by $\sqrt{2}$ over four levels gives an
+observed order of convergence of $2.22$ and a Richardson estimate
+\SI{0.284}{\kelvin} above the shipped result, the approach being monotone from
+below. The same exercise in time --- refining the whole schedule
+self-similarly --- moves the peak by \SI{0.004}{\kelvin} with the sign
+alternating, which is the solver's noise floor rather than a convergence rate.
+The two are not comparable, and the shipped configuration is accordingly
+generous in time and tight in space.
+
+The linear systems are solved by conjugate gradients with diagonal
+preconditioning. The system is symmetric positive definite --- the textbook
+case --- and a direct sparse factorisation was measured to be at least
+$3.7\times$ slower at this problem size.
+
+\subsection{Budget}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Measured error contributions and their references. Accuracy target:
+           \SI{0.5}{\kelvin} on the peak temperature.}
+  \label{tab:errors}
+  \begin{tabular}{llS[table-format=1.3]}
+    \toprule
+    Contribution & Measured against & {Error / \si{\kelvin}} \\
+    \midrule
+    Linear construction, Eq.~\eqref{eq:split}--\eqref{eq:closed}
+      & conventional simulation & 0.070 \\
+    Interpolation of the kernel
+      & unseen simulated designs & 0.130 \\
+    Treating depth analytically
+      & kernels at four depths & 0.062 \\
+    Time discretisation of \eqref{eq:closed}
+      & analytic kernel, Eq.~\eqref{eq:expkernel} & 0.017 \\
+    Probe-grid sampling
+      & exact nodal maximum & 0.100 \\
+    Spatial discretisation
+      & Richardson extrapolation & 0.284 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+
+The first row is the decisive one. It compares the assembled answer --- one
+steady solve, one step-response run, and the convolution with a six-term decay
+curve --- against a conventional transient simulation of the same case with the
+real decay curve as its source and the undisturbed field as its initial
+condition. The two agree to \SI{0.070}{\kelvin} at the peak. Everything in
+Section~2 rests on that agreement.
+
+The last row is the largest, and it is of a different kind. Every other entry is
+a difference between two things computed on the same mesh, so the mesh cancels
+out of it; the spatial term is the distance from the mesh to the continuum, and
+nothing in the other measurements can see it. It is reported here as a
+\emph{documented offset} rather than applied as a correction. It is systematic
+and one-signed --- all designs use the same mesh and all underestimate by about
+the same amount --- so it largely cancels in comparisons between designs, which
+is what the model is mostly used for. It does not cancel in an absolute value
+compared against a temperature limit. Applying the extrapolated offset as a
+constant would trade a known bias for an unknown one: it was measured at a
+single design point, and there is no evidence that it is constant over a
+ten-dimensional parameter space. An absolute peak needed to better than a few
+tenths of a kelvin is best obtained from one directly simulated run on a refined
+mesh at that design point.
+
+\section{Assumptions and limits}\label{sec:limits}
+
+\begin{itemize}[nosep,leftmargin=*]
+  \item Pure heat conduction. No convection, no hydraulics, no mechanics, no
+        radiative exchange across gaps, no resaturation of the backfill.
+  \item Temperature-independent material properties. This is what makes the
+        superposition exact, and it is the assumption that would have to go
+        first if the model were extended: a conductivity $\lambda(T)$ invalidates
+        Proposition~\ref{prop:psi}, Duhamel's principle~\eqref{eq:duhamel} and
+        the loading relation~\eqref{eq:admissible} alike.
+  \item Perfect thermal contact between all regions; no contact resistance.
+  \item An infinite emplacement field with all canisters emplaced
+        simultaneously --- the consequence of symmetry on all four lateral
+        faces, and the conservative standard assumption for near-field design. A
+        genuinely isolated canister would require far-field Dirichlet boundaries
+        instead.
+  \item The heat source is uniform over the canister volume.
+  \item The host rock is homogeneous over the whole column: no geological
+        layering, no depth-dependent conductivity or gradient.
+  \item The interpolation is valid over the trained ranges of $g$, $a$ and $L$;
+        outside them the prediction is an extrapolation and reports itself as
+        one.
+  \item THERESA is a private hobby project. Geometry, material parameters,
+        decay-heat spectra and the design limit are simplified or assumed
+        values, loosely based on published literature; they are not realistic
+        and do not describe any existing or planned repository. The results
+        are not suitable for design, licensing or safety assessments.
+\end{itemize}
+
+\end{document}

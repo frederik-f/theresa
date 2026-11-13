@@ -1,0 +1,52 @@
+# Checks, test suite and documentation build on every push and pull request.
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      # setup-uv publishes no major-version tags.
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          python-version: "3.13"
+          enable-cache: true
+
+      # Runtime libraries of the gmsh wheel.
+      - name: System libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libglu1-mesa libxcursor1 libxft2 libxinerama1
+
+      - name: Environment
+        run: uv sync --locked --all-extras
+
+      - name: Hooks (whitespace, TOML/YAML, ruff)
+        run: uv run pre-commit run --all-files --show-diff-on-failure
+        env:
+          SKIP: pytest
+
+      - name: REUSE compliance
+        run: uvx reuse@6.3.0 lint
+
+      - name: Test suite
+        run: uv run pytest -q
+
+      - name: Documentation
+        run: uv run sphinx-build -W -b html docs docs/_build/html

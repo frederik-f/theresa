@@ -1,0 +1,7 @@
+# Hosted GUI (Streamlit Community Cloud): surrogate prediction only.
+# Takes precedence over uv.lock for the entry point theresa_gui/app.py.
+numpy==2.5.3
+scipy==1.18.1
+matplotlib==3.10.9
+scikit-learn==1.9.1
+streamlit==1.64.0

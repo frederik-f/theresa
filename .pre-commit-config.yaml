@@ -1,0 +1,44 @@
+# Pre-commit hooks for THERESA.
+#
+#   uv sync --extra dev
+#   uv run pre-commit install        # activate the git hook (once per clone)
+#   uv run pre-commit run --all-files
+#
+# CI-equivalent check without installing the hook:
+#   uv run pre-commit run --all-files --show-diff-on-failure
+
+# License texts are kept verbatim.
+exclude: ^(LICENSE|LICENSES/.*)$
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: check-added-large-files
+        # data/surrogate.pkl (about 24 MB) is part of the distribution.
+        args: [--maxkb=32768]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.8
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
+  # Tests run in the project environment (gmsh and OGS wheels).
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        entry: scripts/run-tests.sh
+        language: script
+        pass_filenames: false
+        always_run: true

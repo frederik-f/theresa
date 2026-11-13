@@ -1,0 +1,22 @@
+version = 1
+
+[[annotations]]
+path = "**"
+SPDX-FileCopyrightText = "2026 frederik-f"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+[[annotations]]
+path = [
+    "README.md",
+    "CHANGELOG.md",
+    "docs/*.md",
+    "docs/*.rst",
+    "docs/theory.tex",
+    "docs/theory.pdf",
+    "docs/assets/**",
+    "docs/figures/**",
+    "theresa_gui/assets/**",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2026 frederik-f"
+SPDX-License-Identifier = "CC-BY-4.0"

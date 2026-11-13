@@ -1,0 +1,39 @@
+# THERESA theme, light and dark (selectable in the Streamlit settings menu).
+
+[theme]
+baseRadius = "medium"
+
+redColor = "#d03b3b"
+orangeColor = "#e5833d"
+yellowColor = "#f2b84b"
+blueColor = "#2a78d6"
+greenColor = "#2e8b57"
+grayColor = "#5b7088"
+
+[theme.light]
+primaryColor = "#2367c4"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#eef3f9"
+textColor = "#13294a"
+linkColor = "#2367c4"
+borderColor = "#d5deea"
+codeBackgroundColor = "#eef3f9"
+
+[theme.light.sidebar]
+backgroundColor = "#f1f5fa"
+secondaryBackgroundColor = "#ffffff"
+borderColor = "#d5deea"
+
+[theme.dark]
+primaryColor = "#2f74cc"
+backgroundColor = "#0c1c2f"
+secondaryBackgroundColor = "#15304e"
+textColor = "#e6edf3"
+linkColor = "#5a9be0"
+borderColor = "#2c4a6c"
+codeBackgroundColor = "#15304e"
+
+[theme.dark.sidebar]
+backgroundColor = "#0f2238"
+secondaryBackgroundColor = "#15304e"
+borderColor = "#2c4a6c"
